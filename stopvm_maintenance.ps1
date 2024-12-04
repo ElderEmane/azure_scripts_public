@@ -1,4 +1,6 @@
 #post maintenance script, stopping VM started for patching leaving all others running
+#base taken from https://learn.microsoft.com/en-us/azure/automation/update-management/pre-post-scripts
+
 param
 (
 
