@@ -3,12 +3,10 @@ Import-Module Az.Resources
 Import-Module Az.Compute
 
 function Connect {
-    function Connect {
         $null = Connect-AzAccount -WarningAction SilentlyContinue -Verbose:$false
         $subscriptions = Get-AzSubscription | Select-Object Id, Name
 
         return $subscriptions
-    }
 }
 
 function tag_adhoc {
