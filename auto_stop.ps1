@@ -2,6 +2,7 @@ Import-Module Az.Accounts
 Import-Module Az.Resources
 Import-Module Az.Compute
 
+
 function Connect {
     $null = Connect-AzAccount -WarningAction SilentlyContinue -Verbose:$false
     $subscriptions = Get-AzSubscription | Select-Object Id, Name
@@ -15,7 +16,8 @@ function tag_adhoc {
         [string]$VMrg
     )
 
-    Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
+    $job = Start-ThreadJob -ScriptBlock {Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force | Wait-Job} -ThrottleLimit 10
+    Write-Host "executed adhoc"
 }
 
 function tag_24/5 {
@@ -23,9 +25,13 @@ function tag_24/5 {
         [string]$VMname,
         [string]$VMrg
     )
-    if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
-        Write-Host "stopping vm" $VMname
+
+    $hour = (Get-Date).ToString("HHmm")
+    $dayOfWeek = (Get-Date).DayOfWeek
+
+    if ($dayOfWeek -ge [System.DayOfWeek]::Friday -and ($hour -eq "2000")) {
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Write-Host "executed 24/5"
     }
     else {
         Write-Output "invalid day of the week"
@@ -37,15 +43,16 @@ function tag_adhoc_24/5 {
         [string]$VMname,
         [string]$VMrg
     )
-    Write-Output $VMrg $VMname
+
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
-        Write-Host "stopping vm" $VMname
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Write-Host "executed adhoc_24/5"
     }
     else {
         Write-Output "invalid day of the week"
     }
 }
+
 function tag_business_hours{
     param (
         [string]$VMname,
@@ -58,7 +65,7 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "1800") {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
         Write-Host "stopping vm" $VMname
     }
 
@@ -111,7 +118,12 @@ function autostop {
                                 Invoke-Expression $command
                             }
                             else {
-                                Write-Host "no tag"
+                                if ($operation_hours -ne " " -and $operation_hours -ne $null){
+                                    Write-Host "different hour"
+                                }
+                                else {
+                                    Write-Host "no tag"
+                                }
                             }
                         }
                     }
