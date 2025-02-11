@@ -1,6 +1,7 @@
 Import-Module Az.Accounts
 Import-Module Az.Resources
 Import-Module Az.Compute
+Import-Module ThreadJob
 
 function Connect {
     $null = Connect-AzAccount -WarningAction SilentlyContinue -Verbose:$false
@@ -15,7 +16,8 @@ function tag_adhoc {
         [string]$VMrg
     )
 
-    Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+    $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+    Write-Host "executed adhoc"
 }
 
 function tag_24/5 {
@@ -27,8 +29,11 @@ function tag_24/5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and ($hour -ge "0000" -and $hour -le "2359")) {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
-        Write-Host "starting vm" $VMname
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Write-Host "executed 24/5"
+    }
+    else {
+        Write-Output "invalid day of the week"
     }
 }
 
@@ -39,8 +44,8 @@ function tag_adhoc_24/5 {
     )
     Write-Output $VMrg $VMname
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
-        Write-Host "starting vm" $VMname
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Write-Host "executed adhoc_24/5"
     }
     else {
         Write-Output "invalid day of the week"
@@ -59,8 +64,8 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "0600") {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
-        Write-Host "starting vm" $VMname
+        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Write-Host "executed business_hours"
     }
 
 }
@@ -113,7 +118,12 @@ function autostart {
                                 Invoke-Expression $command
                             }
                             else {
-                                Write-Host "no tag"
+                                if ($operation_hours -ne " " -and $operation_hours -ne $null){
+                                    Write-Host "different hour"
+                                }
+                                else {
+                                    Write-Host "no tag"
+                                }
                             }
                         }
                     }
