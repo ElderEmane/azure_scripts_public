@@ -1,6 +1,7 @@
 Import-Module Az.Accounts
 Import-Module Az.Resources
 Import-Module Az.Compute
+Import-Module ThreadJob
 
 
 function Connect {
@@ -16,7 +17,8 @@ function tag_adhoc {
         [string]$VMrg
     )
 
-    $job = Start-ThreadJob -ScriptBlock {Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force | Wait-Job} -ThrottleLimit 10
+    Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+    Write-Host "stopping vm" $VMname
     Write-Host "executed adhoc"
 }
 
@@ -30,7 +32,8 @@ function tag_24/5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Friday -and ($hour -eq "2000")) {
-        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        Write-Host "stopping vm" $VMname
         Write-Host "executed 24/5"
     }
     else {
@@ -45,7 +48,8 @@ function tag_adhoc_24/5 {
     )
 
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        Write-Host "stopping vm" $VMname
         Write-Host "executed adhoc_24/5"
     }
     else {
@@ -65,8 +69,11 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "1800") {
-        $job = Start-ThreadJob -ScriptBlock {Start-AzVM -ResourceGroupName $VMrg -Name $VMname | Wait-Job} -ThrottleLimit 10
+        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
         Write-Host "stopping vm" $VMname
+    }
+    else {
+        Write-Output "invalid day of the week"
     }
 
 }
@@ -86,56 +93,66 @@ function autostop {
     $currentDateTime = Get-Date
 
     foreach ($subscription in $subscriptions) {
-        Write-Host "Processing Subscription: $($subscription.Name)"
-        Select-AzSubscription -SubscriptionId $subscription.Id > $null
-        $vms = Get-AzVM
+        jobs += ThreadJob -ScriptBlock {
+            param($subscription)
+            Write-Host "Processing Subscription: $($subscription.Name)"
+            Select-AzSubscription -SubscriptionId $subscription.Id > $null
+            $vms = Get-AzVM
 
-        foreach ($vm in $vms) {
-            $VMname = $vm.name
-            $VMid = $vm.id
-            $stopTAG = $vm.Tags['autostoptime']
-            $location = $vm.location
-            $operation_hours = $vm.Tags['operation_hours']
+            foreach ($vm in $vms) {
+                $VMname = $vm.name
+                $VMid = $vm.id
+                $startTAG = $vm.Tags['autostarttime']
+                $location = $vm.location
+                $operation_hours = $vm.Tags['operation_hours']
 
-            $split = $VMid -split "/";
-            $VMrg = $split[4];0.
+                $split = $VMid -split "/";
+                $VMrg = $split[4];0.
+                $VMrg = $VMrg.ToLower()
 
-            Write-Host $VMname $VMrg $stopTAG $location
+                Write-Host $VMname $VMrg $startTAG $location
 
-            if ($operation_hours -notmatch "24/7"){
-                foreach ($key in $timezone.Keys) {
-                    if ($location -eq $key){
-                        $convertedDateTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($currentDateTime, $timezone[$key])
-                        $hour = $convertedDateTime.ToString("HH") + "00"
-                        Write-Output $dayoftheweek
-                        if ($hour -eq $stopTAG){
-                            $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
-                            Invoke-Expression $command
-                        }
-                        else {
-                            if ($operation_hours -match "24/5" -or $operation_hours -match "business_hours" ){
+                if ($operation_hours -notmatch "24/7"){
+                    foreach ($key in $timezone.Keys) {
+                        if ($location -eq $key){
+                            $convertedDateTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($currentDateTime, $timezone[$key])
+                            $hour = $convertedDateTime.ToString("HH") + "00"
+                            Write-Output $dayoftheweek
+                            if ($hour -eq $startTAG){
                                 $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
                                 Invoke-Expression $command
                             }
                             else {
-                                if ($operation_hours -ne " " -and $operation_hours -ne $null){
-                                    Write-Host "different hour"
+                                if ($operation_hours -eq "24/5" -or $operation_hours -eq "business_hours" ){
+                                    Write-Host "24/5 or businnes_hours"
+                                    $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
+                                    Invoke-Expression $command
                                 }
                                 else {
-                                    Write-Host "no tag"
+                                    if ($null -ne $operation_hours -and $operation_hours -ne " " ){
+                                        Write-Host "different hour"
+                                    }
+                                    else {
+                                        Write-Host "no tag"
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                else {
+                    Write-Output "24/7"
+                }
             }
-            else {
-                Write-Output "24/7"
-            }
-        }
+        } -ArgumentList $subscription
+    }
+    Wait-Job -Job $jobs
+
+    foreach ($job in $jobs) {
+        Receive-Job -Job $job
     }
 }
 
 
 $subscriptions = Connect
-autostop -subscriptions $subscriptions
+autostart -subscriptions $subscriptions
