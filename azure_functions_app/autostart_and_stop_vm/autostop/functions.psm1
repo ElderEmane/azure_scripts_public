@@ -4,7 +4,7 @@ function tag_adhoc {
         [string]$VMrg
     )
 
-    Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+    Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
     Write-Host "stopping vm" $VMname
     Write-Host "executed adhoc"
 }
@@ -19,7 +19,7 @@ function tag_24_5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Friday -and ($hour -eq "2000")) {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
         Write-Host "stopping vm" $VMname
         Write-Host "executed 24/5"
     }
@@ -35,7 +35,7 @@ function tag_adhoc_24_5 {
     )
 
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
         Write-Host "stopping vm" $VMname
         Write-Host "executed adhoc_24/5"
     }
@@ -56,7 +56,7 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "1800") {
-        Start-AzVM -ResourceGroupName $VMrg -Name $VMname
+        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
         Write-Host "stopping vm" $VMname
     }
     else {
