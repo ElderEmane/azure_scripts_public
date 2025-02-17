@@ -38,7 +38,6 @@ function autostop {
     $currentDateTime = Get-Date
 
     foreach ($subscription in $subscriptions) {
-        param($subscription)
         Write-Host "Processing Subscription: $($subscription.Name)"
         Select-AzSubscription -SubscriptionId $subscription.Id > $null
 
@@ -61,16 +60,16 @@ function autostop {
 
             $VMname = $_.name
             $VMid = $_.id
-            $startTAG = $_.Tags['autostarttime']
+            $stopTAG = $_.Tags['autostoptime']
             $location = $_.location
-            $operation_hours = $_.Tags['operation_hours'] -replace '\', '_'
+            $operation_hours = $_.Tags['operation_hours'] -replace '/', '_'
 
             $split = $VMid -split "/";
             $VMrg = $split[4];0.
             $VMrg = $VMrg.ToLower()
 
 
-            Write-Host $VMname $VMrg $startTAG $operation_hours
+            Write-Host $VMname $VMrg $stopTAG $operation_hours
 
             if ($operation_hours -notmatch "24/7"){
                 foreach ($key in $timezone.Keys) {
@@ -78,7 +77,7 @@ function autostop {
                         $convertedDateTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($currentDateTime, $timezone[$key])
                         $hour = $convertedDateTime.ToString("HH") + "00"
                         Write-Output $dayoftheweek
-                        if ($hour -eq $startTAG){
+                        if ($hour -eq $stopTAG){
                             $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
                             Invoke-Expression $command
                         }
@@ -105,13 +104,19 @@ function autostop {
             }
         }
     }
-    Wait-Job -Job $jobs
+    foreach ($job in $jobs) {
+        if ($job.State -eq 'Running') {
+            Write-Host "Job is still running, waiting for it to complete..."
+            Wait-Job -Job $job
+        }
+    }
 
     foreach ($job in $jobs) {
-        Receive-Job -Job $job
+        $result = Receive-Job -Job $job
+        Write-Host "Job result: $result"
     }
 }
 
 
 $subscriptions = Connect
-autostart -subscriptions $subscriptions
+autostop -subscriptions $subscriptions
