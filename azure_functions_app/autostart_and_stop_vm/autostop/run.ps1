@@ -46,7 +46,7 @@ function autostop {
 
         $vms | ForEach-Object -Parallel {
 
-            $functionsPath = "/home/site/wwwroot/autostart/functions.psm1"
+            $functionsPath = "/home/site/wwwroot/autostop/functions.psm1"
             Write-Host "Importing functions module from: $functionsPath"
             Import-Module $functionsPath
 
