@@ -3,10 +3,15 @@ function tag_adhoc {
         [string]$VMname,
         [string]$VMrg
     )
+    $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
 
-    Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
-    Write-Host "stopping vm" $VMname
-    Write-Host "executed adhoc"
+    if ($vmStatus -eq 'VM deallocated') {
+        Write-Host "VM $VMname is already stopped (deallocated). No action needed."
+    } else {
+        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
+        Write-Host "stopping vm" $VMname
+        Write-Host "executed adhoc"
+    }
 }
 
 function tag_24_5 {
@@ -19,9 +24,15 @@ function tag_24_5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Friday -and ($hour -eq "2000")) {
-        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
-        Write-Host "stopping vm" $VMname
-        Write-Host "executed 24/5"
+        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+
+        if ($vmStatus -eq 'VM deallocated') {
+            Write-Host "VM $VMname is already stopped (deallocated). No action needed."
+        } else {
+            Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
+            Write-Host "stopping vm" $VMname
+            Write-Host "executed 24/5"
+        }
     }
     else {
         Write-Output "invalid day of the week"
@@ -34,13 +45,20 @@ function tag_adhoc_24_5 {
         [string]$VMrg
     )
 
-    if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
-        Write-Host "stopping vm" $VMname
-        Write-Host "executed adhoc_24/5"
-    }
-    else {
-        Write-Output "invalid day of the week"
+    $hour = (Get-Date).ToString("HHmm")
+    $dayOfWeek = (Get-Date).DayOfWeek
+
+    if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and ($hour -ge "0000" -and $hour -le "2300")) {
+
+        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+
+        if ($vmStatus -eq 'VM deallocated') {
+            Write-Host "VM $VMname is already stopped (deallocated). No action needed."
+        } else {
+            Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
+            Write-Host "Stopping VM $VMname"
+            Write-Host "Executed adhoc_24/5"
+        }
     }
 }
 
@@ -56,8 +74,15 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "1800") {
-        Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
-        Write-Host "stopping vm" $VMname
+
+        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+
+        if ($vmStatus -eq 'VM deallocated') {
+            Write-Host "VM $VMname is already stopped (deallocated). No action needed."
+        } else {
+            Stop-AzVM -ResourceGroupName $VMrg -Name $VMname -Force
+            Write-Host "stopping vm" $VMname
+        }
     }
     else {
         Write-Output "invalid day of the week"
