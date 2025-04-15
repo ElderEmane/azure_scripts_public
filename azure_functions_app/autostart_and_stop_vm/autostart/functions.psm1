@@ -7,7 +7,7 @@ function tag_adhoc {
 
     $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
 
-    if ($vmStatus -eq 'VM running') {
+    if ($vmStatus -eq 'Running') {
         Write-Host "VM $VMname is already running. No action needed."
     } else {
         # Start the VM if it is not running
@@ -28,7 +28,7 @@ function tag_24_5 {
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and ($hour -ge "0000" -and $hour -le "2359")) {
         $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
-        if ($vmStatus -eq 'VM running') {
+        if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {
             Start-AzVM -ResourceGroupName $VMrg -Name $VMname -ErrorAction Stop
@@ -47,7 +47,7 @@ function tag_adhoc_24_5 {
     Write-Output $VMrg $VMname
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
         $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
-        if ($vmStatus -eq 'VM running') {
+        if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {
             Start-AzVM -ResourceGroupName $VMrg -Name $VMname -ErrorAction Stop
@@ -69,7 +69,7 @@ function tag_business_hours{
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "0600") {
         $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
-        if ($vmStatus -eq 'VM running') {
+        if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {
             Start-AzVM -ResourceGroupName $VMrg -Name $VMname -ErrorAction Stop
