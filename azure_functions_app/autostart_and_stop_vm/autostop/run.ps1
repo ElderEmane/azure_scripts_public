@@ -78,13 +78,13 @@ function autostop {
                         $hour = $convertedDateTime.ToString("HH") + "00"
                         Write-Output $dayoftheweek
                         if ($hour -eq $stopTAG){
-                            $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
+                            $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`" -hour `"$hour`""
                             Invoke-Expression $command
                         }
                         else {
                             if ($operation_hours -eq "24/5" -or $operation_hours -eq "business_hours" ){
                                 Write-Host "24/5 or businnes_hours"
-                                $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
+                                $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`" -hour `"$hour`""
                                 Invoke-Expression $command
                             }
                             else {

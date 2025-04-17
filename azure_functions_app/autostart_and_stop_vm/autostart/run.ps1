@@ -65,14 +65,14 @@ function autostart {
                         $hour = $convertedDateTime.ToString("HH") + "00"
                         Write-Output $dayoftheweek
                         if ($hour -eq $startTAG){
-                            $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
+                            $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`" -hour `"$hour`""
                             Write-Output "Executing command: $command"
                             Invoke-Expression $command
                         }
                         else {
                             if ($operation_hours -eq "24_5" -or $operation_hours -eq "business_hours" ){
                                 Write-Host "24_5 or businnes_hours"
-                                $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`""
+                                $command = "tag_$operation_hours -VMname `"$VMname`" -VMrg `"$VMrg`" -hour `"$hour`""
                                 Write-Output "Executing command: $command"
                                 Invoke-Expression $command
                             }
