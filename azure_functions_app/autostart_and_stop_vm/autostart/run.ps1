@@ -58,7 +58,7 @@ function autostart {
 
             Write-Host $VMname $VMrg $location $operation_hours
 
-            if ($operation_hours -notmatch "24_7"){
+            if ($operation_hours -eq "24_7"){
                 foreach ($key in $timezone.Keys) {
                     if ($location -eq $key){
                         $convertedDateTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($currentDateTime, $timezone[$key])

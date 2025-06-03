@@ -6,7 +6,7 @@ function tag_adhoc {
         [string]$hour
     )
 
-    $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+    $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
 
     if ($vmStatus -eq 'Running') {
         Write-Host "VM $VMname is already running. No action needed."
@@ -29,7 +29,7 @@ function tag_24_5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and ($hour -ge "0000" -and $hour -le "2359")) {
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
         if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {
@@ -49,7 +49,7 @@ function tag_adhoc_24_5 {
     )
     Write-Output $VMrg $VMname
     if ((Get-Date).DayOfWeek -ge [System.DayOfWeek]::Monday -and (Get-Date).DayOfWeek -le [System.DayOfWeek]::Friday) {
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
         if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {
@@ -70,7 +70,7 @@ function tag_business_hours{
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "0600") {
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
         if ($vmStatus -eq 'Running') {
             Write-Host "VM $VMname is already running. No action needed."
         } else {

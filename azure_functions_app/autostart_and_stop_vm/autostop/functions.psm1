@@ -4,7 +4,7 @@ function tag_adhoc {
         [string]$VMrg,
         [string]$hour
     )
-    $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+    $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
 
     if ($vmStatus -eq 'VM deallocated') {
         Write-Host "VM $VMname is already stopped (deallocated). No action needed."
@@ -25,7 +25,7 @@ function tag_24_5 {
     $dayOfWeek = (Get-Date).DayOfWeek
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Friday -and ($hour -eq "2000")) {
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
 
         if ($vmStatus -eq 'VM deallocated') {
             Write-Host "VM $VMname is already stopped (deallocated). No action needed."
@@ -51,7 +51,7 @@ function tag_adhoc_24_5 {
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and ($hour -ge "0000" -and $hour -le "2300")) {
 
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
 
         if ($vmStatus -eq 'VM deallocated') {
             Write-Host "VM $VMname is already stopped (deallocated). No action needed."
@@ -74,7 +74,7 @@ function tag_business_hours{
 
     if ($dayOfWeek -ge [System.DayOfWeek]::Monday -and $dayOfWeek -le [System.DayOfWeek]::Friday -and $hour -ge "1800") {
 
-        $vmStatus = (Get-AzVM -ResourceGroupName $VMrg -Name $VMname).PowerState
+        $vmStatus = ((Get-AzVM -ResourceGroupName $VMrg -Name $VMname -Status).Statuses | Where-Object { $_.Code -like "PowerState/*" }).DisplayStatus
 
         if ($vmStatus -eq 'VM deallocated') {
             Write-Host "VM $VMname is already stopped (deallocated). No action needed."

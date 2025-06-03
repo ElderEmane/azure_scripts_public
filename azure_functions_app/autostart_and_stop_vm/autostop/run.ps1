@@ -71,7 +71,7 @@ function autostop {
 
             Write-Host $VMname $VMrg $stopTAG $operation_hours
 
-            if ($operation_hours -notmatch "24/7"){
+            if ($operation_hours -eq "24/7"){
                 foreach ($key in $timezone.Keys) {
                     if ($location -eq $key){
                         $convertedDateTime = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId($currentDateTime, $timezone[$key])
