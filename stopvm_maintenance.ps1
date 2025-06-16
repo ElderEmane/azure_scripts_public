@@ -8,7 +8,7 @@ param
     [object] $WebhookData
 )
 
-Connect-AzAccount -Identity -AccountId "d88b2b8a-9fff-42eb-bd46-ee5fd0a35894"
+Connect-AzAccount -Identity -AccountId "<your service account>" #can be also managed identity
 
 $notificationPayload = ConvertFrom-Json -InputObject $WebhookData.RequestBody
 $eventType = $notificationPayload[0].eventType

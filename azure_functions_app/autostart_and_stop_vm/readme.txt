@@ -3,7 +3,7 @@ Because of limitations of azure function app all functions for working tags need
 Stopping and starting functions are called dynamically based on operation_hours tag.
 operation_hours possibility:
 24/7 - available all the time
-adhoc - starting and stopping action happens every day including weekend
+adhoc_24/7 - starting and stopping action happens every day including weekend
 adhoc_24/5 - starting and stopping action happens Monday - Friday
 business_hours - starting and stopping action happens Monday - Friday 6AM - 06PM
 
